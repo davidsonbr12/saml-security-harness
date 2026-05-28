@@ -1,0 +1,9 @@
+pytest >= 7.4
+pytest-html >= 3.2
+requests >= 2.31
+lxml >= 4.9
+pysaml2 >= 7.4
+cryptography >= 41.0
+docker >= 6.1
+responses >= 0.23
+pytest-cov >= 4.1
