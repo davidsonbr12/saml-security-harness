@@ -5,6 +5,7 @@ $config = [
     'logging.handler' => 'errorlog',
     'datadir' => 'data/',
     'tempdir' => '/tmp/simplesaml',
+    'session.cookie.secure' => false,
 
     'secretsalt' => 'testsalt1234567890abcdef12345678',
     'auth.adminpassword' => 'testpassword',

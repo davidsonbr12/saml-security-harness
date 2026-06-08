@@ -24,6 +24,10 @@ RUN mkdir -p cert && \
         -days 3650 \
         -subj "/CN=saml-idp" && \
     chown www-data:www-data cert/idp.key cert/idp.crt
+
+RUN mkdir -p /var/simplesamlphp/data /tmp/simplesaml && \
+    chown www-data:www-data /var/simplesamlphp/data /tmp/simplesaml
+
 COPY config/ /var/simplesamlphp/config/
 
 COPY metadata/ /var/simplesamlphp/metadata/
@@ -34,5 +38,7 @@ RUN echo 'Alias /simplesaml /var/simplesamlphp/public\n\
     AllowOverride All\n\
 </Directory>' > /etc/apache2/conf-enabled/simplesamlphp.conf \
     && a2enmod rewrite headers
+
+RUN echo "session.save_path = /tmp" > /usr/local/etc/php/conf.d/session.ini
 
 EXPOSE 80

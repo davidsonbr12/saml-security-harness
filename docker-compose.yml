@@ -1,0 +1,9 @@
+services:
+  idp:
+    build: ./docker/idp/
+    ports:
+      - "8080:80"
+    environment:
+      SIMPLESAMLPHP_SP_ENTITY_ID: http://localhost:8080/sp
+      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: http://localhost:8080/sp/acs
+      SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: http://localhost:8080/sp/slo
