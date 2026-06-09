@@ -8,8 +8,8 @@ Built as a portfolio project for Security QA Engineering.
 
 | Phase | Focus | Status |
 |-------|-------|--------|
-| 1 | Environment setup, Docker IdP, baseline login tests | In progress |
-| 2 | SAML assertion validation (NameID, Audience, Conditions) | Planned |
+| 1 | Environment setup, Docker IdP, baseline login tests | Complete |
+| 2 | SAML assertion validation (NameID, Audience, Conditions) | In Progress |
 | 3 | Attack simulations (XSW, replay, signature bypass) | Planned |
 | 4 | Certificate and cryptography tests | Planned |
 | 5 | Edge cases and error handling | Planned |
