@@ -8,12 +8,12 @@ Built as a portfolio project for Security QA Engineering.
 
 | Phase | Focus | Status |
 |-------|-------|--------|
-| 1 | Environment setup, Docker IdP, baseline login tests | Complete |
-| 2 | SAML assertion validation (NameID, Audience, Conditions) | In Progress |
-| 3 | Attack simulations (XSW, replay, signature bypass) | Planned |
-| 4 | Certificate and cryptography tests | Planned |
-| 5 | Edge cases and error handling | Planned |
-| 6 | Reporting and CI integration | Planned |
+| 1 | Environment & Baseline — Docker IdP, baseline login tests | Complete |
+| 2 | Certificate Validation Module — cert chain, expiry, OCSP | Planned |
+| 3 | Attack Simulation Suite — XSW, replay, signature bypass | Planned |
+| 4 | Reporting Layer — HTML + JSON findings output | Planned |
+| 5 | CI/CD Pipeline — GitHub Actions, scheduled runs, badge | Planned |
+| 6 | Polish & Documentation — README, architecture diagram, demo | Planned |
 
 ## Prerequisites
 
@@ -68,16 +68,20 @@ saml-security-harness/
 │           ├── saml20-idp-hosted.php  # IdP metadata
 │           └── saml20-sp-remote.php   # Registered SP
 ├── harness/
-│   ├── client.py       # HTTP session driver for SAML login flows
-│   ├── parser.py       # SAML assertion parsing utilities
-│   └── cert_validator.py  # Certificate inspection helpers
+│   ├── client.py          # HTTP session driver for SAML login flows
+│   ├── parser.py          # SAML base64 decode and XML parsing
+│   ├── cert_validator.py  # Certificate chain and expiry validation
+│   └── report.py          # Severity-tagged HTML and JSON report generation
 ├── tests/
 │   ├── conftest.py         # Docker fixture (session-scoped)
-│   ├── test_assertion.py   # Baseline login and assertion tests
-│   ├── test_attacks.py     # Attack simulation tests
-│   ├── test_certificate.py # Certificate and crypto tests
-│   └── test_flows.py       # Edge case flow tests
-├── reports/            # HTML test reports (gitignored)
+│   ├── test_assertion.py   # Phase 1: baseline login tests
+│   ├── test_certificate.py # Phase 2: certificate validation tests
+│   ├── test_attacks.py     # Phase 3: XSW, replay, and bypass attack tests
+│   └── test_flows.py       # Phase 3: SP/IdP-initiated flow tests
+├── reports/            # HTML/JSON test reports (gitignored)
+├── .github/
+│   └── workflows/
+│       └── saml_security.yml  # CI pipeline
 ├── docker-compose.yml
 ├── pytest.ini
 └── requirements.txt
