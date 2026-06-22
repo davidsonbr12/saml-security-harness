@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 ADMIN_PASSWORD = "testpassword"
 SP_ENTITY_ID = "http://localhost:8080/sp"
-ACS_URL = "http://localhost:8080/sp/acs"
+ACS_URL = "http://localhost:8080/simplesaml/module.php/saml/sp/saml2-acs.php/default-sp"
 
 def _parse_form(response):
     tree = html.fromstring(response.text)

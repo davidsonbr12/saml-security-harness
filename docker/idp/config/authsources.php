@@ -16,4 +16,10 @@ $config = [
             'eduPersonAffiliation' => ['member'],
         ],
     ],
+
+    'default-sp' => [
+        'saml:SP',
+        'entityID' => 'http://localhost:8080/sp',
+        'idp' => '__DYNAMIC:1__',
+    ],
 ];
