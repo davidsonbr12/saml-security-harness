@@ -9,8 +9,8 @@ Built as a portfolio project for Security QA Engineering.
 | Phase | Focus | Status |
 |-------|-------|--------|
 | 1 | Environment & Baseline — Docker IdP, baseline login tests | Complete |
-| 2 | Certificate Validation Module — cert chain, expiry, OCSP | Planned |
-| 3 | Attack Simulation Suite — XSW, replay, signature bypass | Planned |
+| 2 | Certificate Validation Module — cert chain, expiry, OCSP | Complete |
+| 3 | Attack Simulation Suite — XSW, replay, signature bypass | In Progress |
 | 4 | Reporting Layer — HTML + JSON findings output | Planned |
 | 5 | CI/CD Pipeline — GitHub Actions, scheduled runs, badge | Planned |
 | 6 | Polish & Documentation — README, architecture diagram, demo | Planned |
@@ -66,7 +66,8 @@ saml-security-harness/
 │       │   └── authsources.php # Test user credentials
 │       └── metadata/
 │           ├── saml20-idp-hosted.php  # IdP metadata
-│           └── saml20-sp-remote.php   # Registered SP
+│           ├── saml20-idp-remote.php  # IdP metadata as seen by the SP module
+│           └── saml20-sp-remote.php   # Registered SP (real ACS endpoint)
 ├── harness/
 │   ├── client.py          # HTTP session driver for SAML login flows
 │   ├── parser.py          # SAML base64 decode and XML parsing
@@ -84,7 +85,8 @@ saml-security-harness/
 │       └── saml_security.yml  # CI pipeline
 ├── docker-compose.yml
 ├── pytest.ini
-└── requirements.txt
+├── requirements.txt
+└── PLAN.md             # Project plan and phase milestone reference
 ```
 
 ## IdP Test Credentials
@@ -101,5 +103,7 @@ The IdP runs at `http://localhost:8080/simplesaml` when the container is up.
 ## Architecture Notes
 
 The Docker image uses `php:8.3-apache` as a native ARM64 base (required on Apple Silicon — pre-built SimpleSAMLphp images run under QEMU and fail with connection resets). SimpleSAMLphp 2.5 is installed via Composer at build time.
+
+The container runs SimpleSAMLphp as **both IdP and SP** in the same instance. The `default-sp` authsource activates SSP's built-in SP module, which provides a real ACS endpoint for attack tests to POST against. This means attack tests submit tampered assertions to a genuine SAML validator — not a mock.
 
 `session.cookie.secure` is disabled in the SSP config so that Python's `requests` library can send session cookies over HTTP during testing. In a production environment this would always be `true`.

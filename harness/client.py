@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 ADMIN_PASSWORD = "testpassword"
 SP_ENTITY_ID = "http://localhost:8080/sp"
 ACS_URL = "http://localhost:8080/simplesaml/module.php/saml/sp/saml2-acs.php/default-sp"
+SP_LOGIN_URL = "http://localhost:8080/simplesaml/module.php/saml/sp/login/default-sp"
+SP_RETURN_URL = "http://localhost:8080/simplesaml/module.php/core/welcome"
 
 def _parse_form(response):
     tree = html.fromstring(response.text)
@@ -59,6 +61,30 @@ def get_saml_response_xml(idp_base_url, username, password, sp_entity_id=SP_ENTI
             f"Response snippet: {response.text[:500]}"
         )
     return base64.b64decode(saml_b64[0])
+
+def get_sp_flow(username, password):
+    """Drive a full SP-initiated flow through SSP's own SP login endpoint.
+
+    Returns (xml_bytes, session). The session carries the SP's pending
+    AuthnRequest state, which is required for the SP ACS to accept the response.
+    Use this for attack tests that POST (modified) assertions to the SP ACS.
+    """
+    session = requests.Session()
+    response = session.get(SP_LOGIN_URL, params={"ReturnTo": SP_RETURN_URL})
+
+    action, hidden = _parse_form(response)
+    hidden["username"] = username
+    hidden["password"] = password
+    response = session.post(action, data=hidden)
+
+    tree = html.fromstring(response.text)
+    saml_b64 = tree.xpath('//input[@name="SAMLResponse"]/@value')
+    if not saml_b64:
+        raise RuntimeError(
+            f"No SAMLResponse in IdP response (status {response.status_code}). "
+            f"Response snippet: {response.text[:500]}"
+        )
+    return base64.b64decode(saml_b64[0]), session
 
 def get_saml_response_xml_unknown_sp(idp_base_url):
     """Initiate a SAML flow from an SP entity ID not in the IdP's remote metadata."""
