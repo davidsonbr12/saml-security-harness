@@ -31,6 +31,7 @@ def test_missing_signature(idp_container):
     response = _post_to_sp(session, etree.tostring(strip_signature(etree.fromstring(xml_bytes))))
     assert _sp_rejected(response), "SP Accepted unsigned SAML Response"
                                      
+@pytest.mark.attack
 def test_expired_conditions(idp_container):
     pass
 
