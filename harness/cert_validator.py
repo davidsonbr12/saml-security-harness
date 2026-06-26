@@ -74,7 +74,15 @@ def _check_hostname(cert: x509.Certificate, hostname: str, findings: list[Findin
                     detail=f"Hostname '{hostname}' does not match SANs: {dns_names}",
                     remediation="Reissue the certificate with the correct hostname in the SAN extension.",
                 ))
-            return
+        else:
+            # RFC 6125 §6.4.4: SAN extension present → CN must not be used, even with no DNS entries
+            findings.append(Finding(
+                severity="HIGH",
+                check_name="hostname_mismatch",
+                detail=f"Certificate has a SAN extension with no DNS entries; hostname '{hostname}' cannot be matched",
+                remediation="Reissue the certificate with the correct hostname in the SAN extension.",
+            ))
+        return  # SAN extension present → never fall back to CN
     except x509.ExtensionNotFound:
         pass
 
@@ -101,7 +109,8 @@ def _hostname_matches(hostname: str, pattern: str) -> bool:
     if pattern.startswith("*."):
         suffix = pattern[2:]
         parts = hostname.split(".")
-        return len(parts) > 1 and ".".join(parts[1:]) == suffix
+        # Require at least one dot in suffix to block *.com matching b.com (RFC 2818)
+        return "." in suffix and len(parts) > 1 and ".".join(parts[1:]) == suffix
     return hostname == pattern
 
 def _check_ocsp(cert: x509.Certificate, ca: x509.Certificate, findings: list[Finding]) -> None:
@@ -142,7 +151,6 @@ def _check_ocsp(cert: x509.Certificate, ca: x509.Certificate, findings: list[Fin
             headers={"Content-Type": "application/ocsp-request"},
             timeout=5,
         )
-        response_der = resp.content
     except Exception as e:
         findings.append(Finding(
             severity="LOW",
@@ -152,7 +160,16 @@ def _check_ocsp(cert: x509.Certificate, ca: x509.Certificate, findings: list[Fin
         ))
         return
 
-    ocsp_response = ocsp.load_der_ocsp_response(response_der)
+    if not resp.ok:
+        findings.append(Finding(
+            severity="LOW",
+            check_name="ocsp_unavailable",
+            detail=f"OCSP responder returned HTTP {resp.status_code}",
+            remediation="Verify the OCSP responder is reachable and the URL is correct.",
+        ))
+        return
+
+    ocsp_response = ocsp.load_der_ocsp_response(resp.content)
 
     if ocsp_response.response_status != ocsp.OCSPResponseStatus.SUCCESSFUL:
         findings.append(Finding(

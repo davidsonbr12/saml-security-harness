@@ -5,11 +5,10 @@ from datetime import datetime, timezone, timedelta
 from lxml import etree
 
 from harness.client import get_sp_flow, ACS_URL
-from harness.parser import strip_signature, to_base64
+from harness.parser import strip_signature
 
-_SAML_NS   = "urn:oasis:names:tc:SAML:2.0:assertion"
-_SAMLP_NS  = "urn:oasis:names:tc:SAML:2.0:protocol"
-_DS_NS     = "http://www.w3.org/2000/09/xmldsig#"
+_SAML_NS = "urn:oasis:names:tc:SAML:2.0:assertion"
+_DS_NS   = "http://www.w3.org/2000/09/xmldsig#"
 
 
 def _post_to_sp(session, xml_bytes):
@@ -41,6 +40,7 @@ def test_expired_conditions(idp_container):
     root = etree.fromstring(xml_bytes)
 
     conditions = root.find(f".//{{{_SAML_NS}}}Conditions")
+    assert conditions is not None, "SAMLResponse has no Conditions element"
     expired = (datetime.now(timezone.utc) - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
     conditions.set("NotOnOrAfter", expired)
 
@@ -56,6 +56,7 @@ def test_audience_restriction_bypass(idp_container):
     root = etree.fromstring(xml_bytes)
 
     audience = root.find(f".//{{{_SAML_NS}}}Audience")
+    assert audience is not None, "SAMLResponse has no Audience element"
     audience.text = "http://evil-sp.attacker.com"
 
     response = _post_to_sp(session, etree.tostring(root))
@@ -70,6 +71,7 @@ def test_name_id_injection(idp_container):
     root = etree.fromstring(xml_bytes)
 
     name_id = root.find(f".//{{{_SAML_NS}}}NameID")
+    assert name_id is not None, "SAMLResponse has no NameID element"
     name_id.text = "' OR '1'='1"
 
     response = _post_to_sp(session, etree.tostring(root))

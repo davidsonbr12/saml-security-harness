@@ -13,12 +13,15 @@ _findings: list[ReportFinding] = []
 @pytest.fixture(scope="session")
 def idp_container():
     subprocess.run(["docker-compose", "up", "-d"], check=True)
-    while True:
+    deadline = time.time() + 60
+    while time.time() < deadline:
         try:
-            requests.get("http://localhost:8080/simplesaml")
+            requests.get("http://localhost:8080/simplesaml", timeout=2)
             break
-        except:
+        except requests.exceptions.ConnectionError:
             time.sleep(2)
+    else:
+        raise RuntimeError("IdP container did not become ready within 60 seconds")
 
     yield
 
@@ -35,12 +38,19 @@ def pytest_runtest_logreport(report: pytest.TestReport) -> None:
     test_name = report.nodeid
     is_attack = "test_attacks" in test_name
 
-    if hasattr(report, "wasxfail"):
-        # Expected failure — a documented security finding
+    if hasattr(report, "wasxfail") and not report.passed:
+        # xfail — expected failure: documented security finding
         status   = "WARN"
         severity = "HIGH"
         detail   = report.wasxfail
         remediation = "See finding description for remediation guidance."
+
+    elif hasattr(report, "wasxfail") and report.passed:
+        # non-strict xpass — a previously failing test now passes; finding may be resolved
+        status   = "PASS"
+        severity = "INFO"
+        detail   = f"Previously documented finding may be resolved: {report.wasxfail}"
+        remediation = "Verify the fix and remove the xfail marker if appropriate."
 
     elif report.passed:
         status   = "PASS"

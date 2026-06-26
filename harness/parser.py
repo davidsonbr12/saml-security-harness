@@ -2,7 +2,6 @@ import base64
 from lxml import etree
 
 _SAML_NS = "urn:oasis:names:tc:SAML:2.0:assertion"
-_SAMLP_NS = "urn:oasis:names:tc:SAML:2.0:protocol"
 _DS_NS = "http://www.w3.org/2000/09/xmldsig#"
 
 def decode_saml_response(b64_response: str) -> etree._Element:
@@ -20,7 +19,7 @@ def extract_attributes(root: etree._Element) -> dict[str, list[str]]:
     result: dict[str, list[str]] = {}
     for attr in root.findall(f".//{{{_SAML_NS}}}Attribute"):
         name = attr.get("Name")
-        values = [v.text for v in attr.findall(f"{{{_SAML_NS}}}AttributeValue")]
+        values = [v.text for v in attr.findall(f"{{{_SAML_NS}}}AttributeValue") if v.text is not None]
         result[name] = values
     return result
 

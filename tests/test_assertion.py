@@ -8,7 +8,6 @@ TEST_URL = f"{IDP_BASE}/module.php/admin/test/example-userpass"
 SP_ENTITY_ID = "http://localhost:8080/sp"
 
 _SAML_NS = "urn:oasis:names:tc:SAML:2.0:assertion"
-_SAMLP_NS = "urn:oasis:names:tc:SAML:2.0:protocol"
 
 
 # ── Existing baseline login tests ─────────────────────────────────────────────
@@ -47,15 +46,14 @@ def test_user2_login_returns_200(idp_container):
 def _get_assertion(idp_container):
     xml_bytes = get_saml_response_xml(IDP_BASE, "user1", "password1")
     root = etree.fromstring(xml_bytes)
-    assertion = root.find(f"{{{_SAML_NS}}}Assertion")
+    assertion = extract_assertion(root)
     assert assertion is not None, "No Assertion element in SAMLResponse"
     return root, assertion
 
 
 def test_name_id_present(idp_container):
-    _, assertion = _get_assertion(idp_container)
-    name_id = assertion.find(f".//{{{_SAML_NS}}}NameID")
-    assert name_id is not None and name_id.text, "NameID is missing or empty"
+    root, _ = _get_assertion(idp_container)
+    assert extract_name_id(root), "NameID is missing or empty"
 
 
 def test_audience_matches_sp_entity_id(idp_container):
