@@ -109,8 +109,7 @@ saml-security-harness/
 ├── reports/            # HTML/JSON test reports (gitignored)
 ├── docker-compose.yml
 ├── pytest.ini
-├── requirements.txt
-└── PLAN.md             # Project plan and phase milestone reference
+└── requirements.txt
 ```
 
 ## Attack Tests
