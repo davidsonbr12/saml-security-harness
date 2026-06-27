@@ -30,8 +30,17 @@ The test fixture starts and stops the Docker IdP automatically. Reports are writ
 ## Prerequisites
 
 - Python 3.11+
-- Docker Desktop
-- `docker-compose` (installed via Homebrew: `brew install docker-compose`)
+- Docker (with Compose)
+
+**Installing Docker by platform:**
+
+| Platform | Steps |
+|----------|-------|
+| macOS | Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) or `brew install docker docker-compose` |
+| Windows | Install [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/) (includes Compose; enable WSL 2 backend when prompted) |
+| Linux | Install [Docker Engine](https://docs.docker.com/engine/install/) then add the Compose plugin: `sudo apt install docker-compose-plugin` (Debian/Ubuntu) or `sudo dnf install docker-compose-plugin` (Fedora/RHEL). Add your user to the `docker` group to avoid `sudo`: `sudo usermod -aG docker $USER` (log out and back in after). |
+
+**Docker Compose V1 vs V2:** Modern Docker ships Compose as a built-in plugin (`docker compose`). If you installed `docker-compose` (V1, standalone binary), both commands work — substitute `docker compose` for `docker-compose` in the commands below if your version requires it. Run `docker compose version` to check.
 
 ## Setup
 
@@ -42,13 +51,15 @@ cd saml-security-harness
 
 # Create and activate virtual environment
 python3 -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate        # macOS/Linux
+# .venv\Scripts\activate         # Windows (Command Prompt)
+# .venv\Scripts\Activate.ps1     # Windows (PowerShell)
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Build the Docker IdP image (required before first test run)
-docker-compose build
+docker compose build
 ```
 
 ## Running Tests
