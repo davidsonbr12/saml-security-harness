@@ -1,3 +1,4 @@
+import ipaddress
 import pytest
 import responses as mock_http
 from datetime import datetime, timezone, timedelta
@@ -267,6 +268,42 @@ def test_ocsp_bad_response_status_raises_medium(ca):
 
     findings = validate_cert_chain(_pem(cert), _pem(ca_cert), check_ocsp=True)
     assert any(f.check_name == "ocsp_error" and f.severity == "MEDIUM" for f in findings)
+
+
+def test_hostname_san_with_no_dns_entries_raises_high(ca):
+    # SAN extension present but contains only an IP address (no DNSName entries).
+    # RFC 6125 §6.4.4: CN must not be used as fallback — hostname cannot be matched.
+    ca_cert, ca_key = ca
+    key = _new_key()
+    cert = (
+        x509.CertificateBuilder()
+        .subject_name(x509.Name([x509.NameAttribute(x509.NameOID.COMMON_NAME, "localhost")]))
+        .issuer_name(ca_cert.subject)
+        .public_key(key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(datetime.now(timezone.utc))
+        .not_valid_after(datetime.now(timezone.utc) + timedelta(days=365))
+        .add_extension(
+            x509.SubjectAlternativeName([x509.IPAddress(ipaddress.IPv4Address("127.0.0.1"))]),
+            critical=False,
+        )
+        .sign(ca_key, hashes.SHA256())
+    )
+    findings = validate_cert_chain(_pem(cert), _pem(ca_cert), hostname="localhost")
+    assert any(f.check_name == "hostname_mismatch" and f.severity == "HIGH" for f in findings)
+
+
+@mock_http.activate
+def test_ocsp_http_error_raises_low(ca):
+    # OCSP responder is reachable but returns a non-2xx HTTP status.
+    ca_cert, ca_key = ca
+    ocsp_url = "http://ocsp.test.local"
+    cert, _ = _make_cert("localhost", ca_cert, ca_key, ocsp_url=ocsp_url)
+
+    mock_http.add(mock_http.POST, ocsp_url, status=503)
+
+    findings = validate_cert_chain(_pem(cert), _pem(ca_cert), check_ocsp=True)
+    assert any(f.check_name == "ocsp_unavailable" and f.severity == "LOW" for f in findings)
 
 
 @mock_http.activate

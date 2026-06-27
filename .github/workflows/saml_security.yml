@@ -1,0 +1,83 @@
+name: SAML Security Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'  # weekly, Monday 06:00 UTC
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install docker-compose
+        run: |
+          sudo curl -fsSL \
+            "https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64" \
+            -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+
+      - name: Build IdP image
+        run: docker-compose build
+
+      - name: Run security tests
+        run: pytest -v
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: reports/
+
+      - name: Summarize critical findings
+        if: failure()
+        shell: python
+        run: |
+          import json, os, sys
+
+          try:
+              with open("reports/report.json") as f:
+                  data = json.load(f)
+          except FileNotFoundError:
+              print("No report generated — tests may have failed before completion.")
+              sys.exit(0)
+
+          findings = [
+              f for f in data.get("findings", [])
+              if f["severity"] in ("CRITICAL", "HIGH") and f["status"] in ("FAIL", "WARN")
+          ]
+
+          summary_path = os.environ.get("GITHUB_STEP_SUMMARY", "")
+          if not summary_path:
+              sys.exit(0)
+
+          lines = ["## Critical / High Security Findings", ""]
+          if findings:
+              lines.append(f"**{len(findings)} finding(s) require attention.**")
+              lines += [
+                  "",
+                  "| Severity | Test | Detail |",
+                  "|----------|------|--------|",
+              ]
+              for f in findings:
+                  detail = f["detail"].replace("|", "-")[:120]
+                  lines.append(f'| {f["severity"]} | `{f["test_name"]}` | {detail} |')
+          else:
+              lines.append("No CRITICAL or HIGH findings in this run.")
+
+          with open(summary_path, "a") as fh:
+              fh.write("\n".join(lines) + "\n")

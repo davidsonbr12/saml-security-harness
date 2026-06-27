@@ -1,5 +1,7 @@
 # SAML/SSO Security Test Harness
 
+[![SAML Security Tests](https://github.com/davidsonbr12/saml-security-harness/actions/workflows/saml_security.yml/badge.svg)](https://github.com/davidsonbr12/saml-security-harness/actions/workflows/saml_security.yml)
+
 A security testing harness for SAML 2.0 Identity Providers. Simulates real attack vectors — XML Signature Wrapping, assertion replay, signature bypass, and more — against a local SimpleSAMLphp IdP running in Docker.
 
 Built as a portfolio project for Security QA Engineering.
@@ -12,7 +14,7 @@ Built as a portfolio project for Security QA Engineering.
 | 2 | Certificate Validation Module — cert chain, expiry, hostname, OCSP | Complete |
 | 3 | Attack Simulation Suite — XSW, replay, signature bypass | Complete |
 | 4 | Reporting Layer — HTML + JSON findings output | Complete |
-| 5 | CI/CD Pipeline — GitHub Actions, scheduled runs, badge | Planned |
+| 5 | CI/CD Pipeline — GitHub Actions, scheduled runs, badge | Complete |
 | 6 | Polish & Documentation — README, architecture diagram, demo | Planned |
 
 ## Prerequisites
